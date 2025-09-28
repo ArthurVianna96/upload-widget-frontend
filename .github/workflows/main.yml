@@ -1,4 +1,4 @@
-name: Deploy to S3
+name: Deploy to Vercel
 
 on:
   push:
@@ -6,9 +6,11 @@ on:
       - master
 
 env:
-  AWS_BUCKET_NAME_STATIC: "rocketseat-upload-widget-web-static-a"
-  AWS_BUCKET_NAME_CDN: "rocketseat-upload-widget-web-cdn-a"
-  SOURCE_DIR: "./dist"
+  # AWS_BUCKET_NAME_STATIC: "rocketseat-upload-widget-web-static-a"
+  # AWS_BUCKET_NAME_CDN: "rocketseat-upload-widget-web-cdn-a"
+  # SOURCE_DIR: "./dist"
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
 jobs:
   deploy:
@@ -29,29 +31,45 @@ jobs:
         id: install-dependencies
         run: npm install
 
-      - name: build project
-        id: build-project
-        run: npm run build
+      - name: Install vercel cli
+        id: install-vercel-cli
+        run: npm install -g vercel@latest
 
-      - name: configure aws
-        id: configure-aws
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ vars.AWS_REGION }}
+      - name: Pull project from vercel
+        id: pull-project-from-vercel
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
-      - name: sync files to S3 static
-        id: sync-files-to-s3
-        run: |
-          aws s3 sync ${{ env.SOURCE_DIR }} s3://${{ env.AWS_BUCKET_NAME_STATIC }} --delete
+      - name: Build App
+        id: build-app
+        run: vercel build --yes --prod --token=${{ secrets.VERCEL_TOKEN }}
 
-      - name: sync files to S3 CDN
-        id: sync-files-to-s3-cdn
-        run: |
-          aws s3 sync ${{ env.SOURCE_DIR }} s3://${{ env.AWS_BUCKET_NAME_CDN }} --delete
+      - name: Deploy App
+        id: deploy-app
+        run: vercel deploy --prebuild --prod --token=${{ secrets.VERCEL_TOKEN }}
 
-      - name: Invalidate CloudFront Cache
-        id: invalidate-cloudfront-cache
-        run: |
-          aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
+      # - name: build project
+      #   id: build-project
+      #   run: npm run build
+
+      # - name: configure aws
+      #   id: configure-aws
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     aws-region: ${{ vars.AWS_REGION }}
+
+      # - name: sync files to S3 static
+      #   id: sync-files-to-s3
+      #   run: |
+      #     aws s3 sync ${{ env.SOURCE_DIR }} s3://${{ env.AWS_BUCKET_NAME_STATIC }} --delete
+
+      # - name: sync files to S3 CDN
+      #   id: sync-files-to-s3-cdn
+      #   run: |
+      #     aws s3 sync ${{ env.SOURCE_DIR }} s3://${{ env.AWS_BUCKET_NAME_CDN }} --delete
+
+      # - name: Invalidate CloudFront Cache
+      #   id: invalidate-cloudfront-cache
+      #   run: |
+      #     aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
