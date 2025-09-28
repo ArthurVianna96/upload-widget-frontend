@@ -6,7 +6,8 @@ on:
       - master
 
 env:
-  AWS_BUCKET_NAME: "rocketseat-upload-widget-web-static-a"
+  AWS_BUCKET_NAME_STATIC: "rocketseat-upload-widget-web-static-a"
+  AWS_BUCKET_NAME_CDN: "rocketseat-upload-widget-web-cdn-a"
   SOURCE_DIR: "./dist"
 
 jobs:
@@ -40,7 +41,12 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
 
-      - name: sync files to s3
+      - name: sync files to S3 static
         id: sync-files-to-s3
         run: |
-          aws s3 sync ${{ env.SOURCE_DIR }} s3://${{ env.AWS_BUCKET_NAME }} --delete
+          aws s3 sync ${{ env.SOURCE_DIR }} s3://${{ env.AWS_BUCKET_NAME_STATIC }} --delete
+
+      - name: sync files to S3 CDN
+        id: sync-files-to-s3-cdn
+        run: |
+          aws s3 sync ${{ env.SOURCE_DIR }} s3://${{ env.AWS_BUCKET_NAME_CDN }} --delete
