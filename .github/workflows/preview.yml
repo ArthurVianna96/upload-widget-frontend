@@ -1,0 +1,45 @@
+name: Preview Deploy to Vercel
+
+on:
+  push:
+    branches-ignore:
+      - master
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        id: checkout
+        uses: actions/checkout@v4
+
+      - name: configure node
+        id: configure-node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: install dependencies
+        id: install-dependencies
+        run: npm install
+
+      - name: Install vercel cli
+        id: install-vercel-cli
+        run: npm install -g vercel@latest
+
+      - name: Pull project from vercel
+        id: pull-project-from-vercel
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build App
+        id: build-app
+        run: vercel build --yes --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy App
+        id: deploy-app
+        run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
