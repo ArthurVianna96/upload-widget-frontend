@@ -1,0 +1,46 @@
+name: Deploy to S3
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  AWS_BUCKET_NAME: "rocketseat-upload-widget-web-static-a"
+  SOURCE_DIR: "./dist"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        id: checkout
+        uses: actions/checkout@v4
+
+      - name: configure node
+        id: configure-node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: install dependencies
+        id: install-dependencies
+        run: npm install
+
+      - name: build project
+        id: build-project
+        run: npm run build
+
+      - name: configure aws
+        id: configure-aws
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: sync files to s3
+        id: sync-files-to-s3
+        run: |
+          aws s3 sync ${{ env.SOURCE_DIR }} s3://${{ env.AWS_BUCKET_NAME }} --delete
