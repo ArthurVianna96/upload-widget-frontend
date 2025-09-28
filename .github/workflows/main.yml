@@ -45,7 +45,7 @@ jobs:
 
       - name: Deploy App
         id: deploy-app
-        run: vercel deploy --prebuild --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       # - name: build project
       #   id: build-project
